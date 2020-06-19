@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HEF.Flink.SqlClient", "src\HEF.Flink.SqlClient\HEF.Flink.SqlClient.csproj", "{10245B22-1CFF-4B7B-BBDE-D91E8E545558}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HEF.Flink.SqlClient.Test", "test\HEF.Flink.SqlClient.Test\HEF.Flink.SqlClient.Test.csproj", "{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{A170E58B-EEC5-411D-B5E3-10691886C9D1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{10245B22-1CFF-4B7B-BBDE-D91E8E545558}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10245B22-1CFF-4B7B-BBDE-D91E8E545558}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10245B22-1CFF-4B7B-BBDE-D91E8E545558}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10245B22-1CFF-4B7B-BBDE-D91E8E545558}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD} = {A170E58B-EEC5-411D-B5E3-10691886C9D1}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BC8EC9F7-CF42-4E6A-ABF4-9C2F64167B11}
+	EndGlobalSection
+EndGlobal
