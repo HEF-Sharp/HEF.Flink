@@ -10,7 +10,7 @@ namespace HEF.Flink.SqlClient
 
         public IList<ColumnInfo> Columns { get; set; }
 
-        public IList<IList<string>> Data { get; set; }
+        public IList<IList<object>> Data { get; set; }
 
         [JsonPropertyName("change_flags")]
         public IList<bool> ChangeFlags { get; set; }

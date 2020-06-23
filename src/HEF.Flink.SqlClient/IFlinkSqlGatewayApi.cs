@@ -26,7 +26,7 @@ namespace HEF.Flink.SqlClient
 
         #region Job
         [HttpGet("sessions/{sessionId}/jobs/{jobId}/result/{token}")]
-        Task<ResultFetchResponse> FetchResultAsync([Required] string sessionId, [Required] string jobId, [Required] long token, [JsonContent] ResultFetchRequest requestParam);
+        Task<ResultFetchResponse> FetchResultAsync([Required] string sessionId, [Required] string jobId, [Required] long token);
 
         [HttpGet("sessions/{sessionId}/jobs/{jobId}/status")]
         Task<JobStatusResponse> GetJobStatusAsync([Required] string sessionId, [Required] string jobId);
