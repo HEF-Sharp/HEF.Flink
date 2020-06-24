@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using WebApiClientCore;
 using WebApiClientCore.Attributes;
 
-namespace HEF.Flink.SqlClient
+namespace HEF.Flink.SqlApiClient
 {
     public interface IFlinkSqlGatewayApi : IHttpApi
     {

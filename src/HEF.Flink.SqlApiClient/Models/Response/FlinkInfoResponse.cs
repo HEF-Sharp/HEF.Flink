@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace HEF.Flink.SqlClient
+namespace HEF.Flink.SqlApiClient
 {
     public class FlinkInfoResponse
     {

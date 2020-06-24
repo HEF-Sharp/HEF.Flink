@@ -2,7 +2,7 @@
 using System;
 using Xunit;
 
-namespace HEF.Flink.SqlClient.Test
+namespace HEF.Flink.SqlApiClient.Test
 {
     public class FlinkSqlGatewayApiFixture
     {

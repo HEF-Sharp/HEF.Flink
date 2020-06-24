@@ -1,4 +1,4 @@
-﻿namespace HEF.Flink.SqlClient
+﻿namespace HEF.Flink.SqlApiClient
 {
     public class SessionStatusResponse
     {

@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\HEF.Flink.SqlClient\HEF.Flink.SqlClient.csproj" />
+    <ProjectReference Include="..\..\src\HEF.Flink.SqlApiClient\HEF.Flink.SqlApiClient.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HEF.Flink.SqlClient", "src\HEF.Flink.SqlClient\HEF.Flink.SqlClient.csproj", "{10245B22-1CFF-4B7B-BBDE-D91E8E545558}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HEF.Flink.SqlClient.Test", "test\HEF.Flink.SqlClient.Test\HEF.Flink.SqlClient.Test.csproj", "{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{A170E58B-EEC5-411D-B5E3-10691886C9D1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HEF.Flink.SqlApiClient", "src\HEF.Flink.SqlApiClient\HEF.Flink.SqlApiClient.csproj", "{1088D7D0-3C28-4267-AA9C-A54B290E4041}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HEF.Flink.SqlApiClient.Test", "test\HEF.Flink.SqlApiClient.Test\HEF.Flink.SqlApiClient.Test.csproj", "{D5762E5B-F9CE-4A2B-90BE-A800387CA851}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,20 +15,20 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{10245B22-1CFF-4B7B-BBDE-D91E8E545558}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10245B22-1CFF-4B7B-BBDE-D91E8E545558}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10245B22-1CFF-4B7B-BBDE-D91E8E545558}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10245B22-1CFF-4B7B-BBDE-D91E8E545558}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1088D7D0-3C28-4267-AA9C-A54B290E4041}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1088D7D0-3C28-4267-AA9C-A54B290E4041}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1088D7D0-3C28-4267-AA9C-A54B290E4041}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1088D7D0-3C28-4267-AA9C-A54B290E4041}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5762E5B-F9CE-4A2B-90BE-A800387CA851}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5762E5B-F9CE-4A2B-90BE-A800387CA851}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5762E5B-F9CE-4A2B-90BE-A800387CA851}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5762E5B-F9CE-4A2B-90BE-A800387CA851}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{A3395D2C-DEF4-41AB-8FFA-A4A7D2CDEDFD} = {A170E58B-EEC5-411D-B5E3-10691886C9D1}
+		{D5762E5B-F9CE-4A2B-90BE-A800387CA851} = {A170E58B-EEC5-411D-B5E3-10691886C9D1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BC8EC9F7-CF42-4E6A-ABF4-9C2F64167B11}

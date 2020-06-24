@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace HEF.Flink.SqlClient.Test
+namespace HEF.Flink.SqlApiClient.Test
 {
     public class FlinkSqlGatewayTest : FlinkSqlGatewayApiTestBase
     {
