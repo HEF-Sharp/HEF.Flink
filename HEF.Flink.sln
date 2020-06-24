@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HEF.Flink.SqlApiClient", "s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HEF.Flink.SqlApiClient.Test", "test\HEF.Flink.SqlApiClient.Test\HEF.Flink.SqlApiClient.Test.csproj", "{D5762E5B-F9CE-4A2B-90BE-A800387CA851}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HEF.Flink.SqlClient", "src\HEF.Flink.SqlClient\HEF.Flink.SqlClient.csproj", "{FC4D03A2-AC43-448B-BE03-22087C708C92}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{D5762E5B-F9CE-4A2B-90BE-A800387CA851}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5762E5B-F9CE-4A2B-90BE-A800387CA851}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5762E5B-F9CE-4A2B-90BE-A800387CA851}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC4D03A2-AC43-448B-BE03-22087C708C92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC4D03A2-AC43-448B-BE03-22087C708C92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC4D03A2-AC43-448B-BE03-22087C708C92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC4D03A2-AC43-448B-BE03-22087C708C92}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
