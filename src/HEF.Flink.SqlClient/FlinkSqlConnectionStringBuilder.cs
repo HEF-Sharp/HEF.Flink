@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace HEF.Flink.SqlClient
 {
-    public class FlinkSqlConnectionStringBuilder : DbConnectionStringBuilder
+	public class FlinkSqlConnectionStringBuilder : DbConnectionStringBuilder
     {
 		public FlinkSqlConnectionStringBuilder()
 		{ }
@@ -110,6 +110,7 @@ namespace HEF.Flink.SqlClient
 		internal IReadOnlyList<string> Keys { get; private set; }
 
 		internal abstract object GetObject(FlinkSqlConnectionStringBuilder builder);
+
 		internal abstract void SetObject(FlinkSqlConnectionStringBuilder builder, object value);
 	}
 
