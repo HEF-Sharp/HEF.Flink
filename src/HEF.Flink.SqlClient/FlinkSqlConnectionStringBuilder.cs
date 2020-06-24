@@ -8,8 +8,7 @@ namespace HEF.Flink.SqlClient
     public class FlinkSqlConnectionStringBuilder : DbConnectionStringBuilder
     {
 		public FlinkSqlConnectionStringBuilder()
-		{
-		}
+		{ }
 
 		public FlinkSqlConnectionStringBuilder(string connectionString)
 		{
