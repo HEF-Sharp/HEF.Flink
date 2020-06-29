@@ -6,6 +6,11 @@
 
   <ItemGroup>
     <PackageReference Include="HEF.Util" Version="1.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HEF.Flink.SqlApiClient\HEF.Flink.SqlApiClient.csproj" />
   </ItemGroup>
 
 </Project>

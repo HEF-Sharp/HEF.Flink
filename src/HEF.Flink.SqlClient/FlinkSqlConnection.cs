@@ -36,9 +36,6 @@ namespace HEF.Flink.SqlClient
             }
         }
 
-        internal FlinkSqlConnectionStringBuilder ConnectionSettings =>
-            _connectionSettings ??= new FlinkSqlConnectionStringBuilder(_connectionString);
-
         public override ConnectionState State => _connectionState;
 
         protected override DbProviderFactory DbProviderFactory => FlinkSqlClientFactory.Instance;
@@ -48,6 +45,11 @@ namespace HEF.Flink.SqlClient
         public override string DataSource => ConnectionSettings.Server;
 
         public override string ServerVersion => throw new NotImplementedException();
+
+        internal FlinkSqlConnectionStringBuilder ConnectionSettings =>
+            _connectionSettings ??= new FlinkSqlConnectionStringBuilder(_connectionString);
+
+        internal FlinkSqlSession SqlSession { get; private set; }
         #endregion
 
         #region Open
@@ -58,7 +60,7 @@ namespace HEF.Flink.SqlClient
             openFunc.RunSync();
         }
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
             VerifyNotDisposed();
 
@@ -67,6 +69,8 @@ namespace HEF.Flink.SqlClient
 
             try
             {
+                SqlSession = await CreateSessionAsync();
+
                 SetState(ConnectionState.Open);
             }
             catch
@@ -74,8 +78,6 @@ namespace HEF.Flink.SqlClient
                 SetState(ConnectionState.Closed);
                 throw;
             }
-
-            return base.OpenAsync(cancellationToken);
         }
         #endregion
 
@@ -105,6 +107,11 @@ namespace HEF.Flink.SqlClient
                 var eventArgs = new StateChangeEventArgs(previousState, newState);
                 OnStateChange(eventArgs);
             }
+        }
+
+        private ValueTask<FlinkSqlSession> CreateSessionAsync()
+        {
+            throw new NotImplementedException();
         }
         #endregion
 
