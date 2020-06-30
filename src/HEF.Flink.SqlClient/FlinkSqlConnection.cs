@@ -14,6 +14,8 @@ namespace HEF.Flink.SqlClient
 
         private ConnectionState _connectionState;
 
+        private FlinkSqlSession _sqlSession;
+
         public FlinkSqlConnection()
             : this(default)
         { }
@@ -33,6 +35,7 @@ namespace HEF.Flink.SqlClient
                     throw new InvalidOperationException("Cannot change the connection string on an not closed connection.");
 
                 _connectionString = value;
+                _connectionSettings = null;
             }
         }
 
@@ -44,12 +47,23 @@ namespace HEF.Flink.SqlClient
 
         public override string DataSource => ConnectionSettings.Server;
 
-        public override string ServerVersion => throw new NotImplementedException();
+        public override string ServerVersion => SqlSession.Version;
 
         internal FlinkSqlConnectionStringBuilder ConnectionSettings =>
             _connectionSettings ??= new FlinkSqlConnectionStringBuilder(_connectionString);
 
-        internal FlinkSqlSession SqlSession { get; private set; }
+        internal FlinkSqlSession SqlSession
+        {
+            get
+            {
+                VerifyNotDisposed();
+
+                if (_sqlSession is null || State != ConnectionState.Open)
+                    throw new InvalidOperationException($"Connection must be Open; current state is {State}");
+
+                return _sqlSession;
+            }
+        }
         #endregion
 
         #region Open
@@ -69,7 +83,7 @@ namespace HEF.Flink.SqlClient
 
             try
             {
-                SqlSession = await CreateSessionAsync();
+                _sqlSession = await CreateSessionAsync();
 
                 SetState(ConnectionState.Open);
             }
@@ -109,9 +123,13 @@ namespace HEF.Flink.SqlClient
             }
         }
 
-        private ValueTask<FlinkSqlSession> CreateSessionAsync()
+        private async ValueTask<FlinkSqlSession> CreateSessionAsync()
         {
-            throw new NotImplementedException();
+            var sqlSession = new FlinkSqlSession(ConnectionSettings);
+
+            await sqlSession.ConnectAsync();
+
+            return sqlSession;
         }
         #endregion
 
@@ -123,9 +141,18 @@ namespace HEF.Flink.SqlClient
             closeFunc.RunSync();
         }
 
-        public override Task CloseAsync()
+        public override async Task CloseAsync()
         {
-            throw new NotImplementedException();
+            if (State == ConnectionState.Closed)
+                return;
+
+            if (_sqlSession != null)
+            {
+                await _sqlSession.DisposeAsync();
+                _sqlSession = null;
+            }
+
+            SetState(ConnectionState.Closed);
         }
         #endregion
 

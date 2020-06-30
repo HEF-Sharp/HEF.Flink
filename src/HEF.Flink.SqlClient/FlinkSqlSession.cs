@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace HEF.Flink.SqlClient
 {
-    internal class FlinkSqlSession
+    internal class FlinkSqlSession : IAsyncDisposable
     {
         internal FlinkSqlSession(FlinkSqlConnectionStringBuilder connectionSettings)
         {
@@ -17,9 +17,45 @@ namespace HEF.Flink.SqlClient
 
         internal IFlinkSqlGatewayApi SqlGatewayApi { get; }
 
-        internal Task ConnectAsync()
+        internal string Version { get; private set; }
+
+        internal string SessionId { get; private set; }
+
+        internal async Task GetInfoAsync()
         {
-            throw new NotImplementedException();
+            var response = await SqlGatewayApi.GetInfoAsync();
+
+            if (response is null || string.IsNullOrWhiteSpace(response.Version))
+                throw new FlinkSqlException("connect gateway api failed");
+
+            Version = response.Version;
+        }
+
+        internal async Task ConnectAsync()
+        {
+            await GetInfoAsync();
+
+            //currently the Ado.Net interfaces designed for database, not support on streaming 
+            var response = await SqlGatewayApi.CreateSessionAsync(new SessionCreateRequest
+            {
+                Planner = ConnectionSettings.Planner,
+                ExecutionType = "batch"
+            });
+
+            if (response is null || string.IsNullOrWhiteSpace(response.SessionId))
+                throw new FlinkSqlException("create session failed");
+
+            SessionId = response.SessionId;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (string.IsNullOrWhiteSpace(SessionId))
+                return;
+
+            await SqlGatewayApi.CloseSessionAsync(SessionId);
+
+            SessionId = null;
         }
     }
 }
