@@ -102,13 +102,10 @@ namespace HEF.Flink.SqlClient
 
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("Flink Sql not supported transaction");
         }
 
-        protected override DbCommand CreateDbCommand()
-        {
-            throw new NotImplementedException();
-        }
+        protected override DbCommand CreateDbCommand() => new FlinkSqlCommand { Connection = this };
 
         #region Helper Functions
         internal void SetState(ConnectionState newState)
