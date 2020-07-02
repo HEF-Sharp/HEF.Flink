@@ -84,7 +84,8 @@ namespace HEF.Flink.SqlClient
         protected override DbParameterCollection DbParameterCollection => throw new NotSupportedException("Flink Sql not supported parameter");
         #endregion
 
-		public override void Prepare()
+        #region Prepare
+        public override void Prepare()
 		{
 			if (Connection is null)
 				throw new InvalidOperationException("Connection property must be non-null.");
@@ -95,14 +96,9 @@ namespace HEF.Flink.SqlClient
 			if (string.IsNullOrWhiteSpace(CommandText))
 				throw new InvalidOperationException("CommandText must be specified");
 		}
+        #endregion
 
-        public override Task PrepareAsync(CancellationToken cancellationToken = default)
-        {
-			Prepare();
-
-			return Task.CompletedTask;
-        }
-
+        #region ExecuteNonQuery
         public override int ExecuteNonQuery()
         {
 			Func<Task<int>> executeFunc = () => ExecuteNonQueryAsync(CancellationToken.None);
@@ -112,10 +108,12 @@ namespace HEF.Flink.SqlClient
 
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            return base.ExecuteNonQueryAsync(cancellationToken);
+			throw new NotImplementedException();
         }
+		#endregion
 
-        public override object ExecuteScalar()
+		#region ExecuteScalar
+		public override object ExecuteScalar()
         {
 			Func<Task<object>> executeFunc = () => ExecuteScalarAsync(CancellationToken.None);
 
@@ -124,8 +122,9 @@ namespace HEF.Flink.SqlClient
 
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            return base.ExecuteScalarAsync(cancellationToken);
+			throw new NotImplementedException();
         }
+        #endregion
 
         public override void Cancel()
 		{
@@ -133,24 +132,46 @@ namespace HEF.Flink.SqlClient
 		}
 
 		#region Parameter
-		public new DbParameter CreateParameter() => CreateDbParameter();
-
 		protected override DbParameter CreateDbParameter()
         {
 			throw new NotSupportedException("Flink Sql not supported parameter");
         }
-        #endregion
+		#endregion
 
-        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+		#region ExecuteReader
+		public new FlinkSqlDataReader ExecuteReader()
+			=> ExecuteReader(CommandBehavior.Default);        
+
+		public new FlinkSqlDataReader ExecuteReader(CommandBehavior behavior)
         {
+			Func<Task<FlinkSqlDataReader>> executeFunc = () => ExecuteReaderAsync(behavior, CancellationToken.None);
+
+			return executeFunc.RunSync();
+		}
+
+		public new Task<FlinkSqlDataReader> ExecuteReaderAsync()
+			=> ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
+
+		public new Task<FlinkSqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
+			=> ExecuteReaderAsync(behavior, CancellationToken.None);
+
+		public new Task<FlinkSqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
+			=> ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
+
+		public new Task<FlinkSqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+        {
+			throw new NotImplementedException();
+        }
+
+		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+		{
 			Func<Task<DbDataReader>> executeFunc = () => ExecuteDbDataReaderAsync(behavior, CancellationToken.None);
 
 			return executeFunc.RunSync();
 		}
 
-        protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-        {
-            return base.ExecuteDbDataReaderAsync(behavior, cancellationToken);
-        }
-    }
+		protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+			=> await ExecuteReaderAsync(behavior, cancellationToken);
+		#endregion
+	}
 }
