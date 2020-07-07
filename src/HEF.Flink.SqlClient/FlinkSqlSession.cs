@@ -1,5 +1,6 @@
 ﻿using HEF.Flink.SqlApiClient;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HEF.Flink.SqlClient
@@ -31,9 +32,11 @@ namespace HEF.Flink.SqlClient
             Version = response.Version;
         }
 
-        internal async Task ConnectAsync()
+        internal async Task ConnectAsync(CancellationToken cancellationToken)
         {
             await GetInfoAsync();
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             //currently the Ado.Net interfaces designed for database, not support on streaming 
             var response = await SqlGatewayApi.CreateSessionAsync(new SessionCreateRequest
@@ -46,6 +49,20 @@ namespace HEF.Flink.SqlClient
                 throw new FlinkSqlException("create session failed");
 
             SessionId = response.SessionId;
+        }
+
+        internal Task<StatementExecuteResponse> ExecuteStatementAsync(string sqlStatement, long executionTimeoutMillis)
+        {
+            if (string.IsNullOrWhiteSpace(sqlStatement))
+                throw new ArgumentNullException(nameof(sqlStatement));
+
+            var requestParam = new StatementExecuteRequest
+            {
+                Statement = sqlStatement,
+                ExecutionTimeout = executionTimeoutMillis
+            };
+
+            return SqlGatewayApi.ExecuteStatementAsync(SessionId, requestParam);
         }
 
         public async ValueTask DisposeAsync()

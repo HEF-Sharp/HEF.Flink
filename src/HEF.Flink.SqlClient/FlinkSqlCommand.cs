@@ -106,9 +106,11 @@ namespace HEF.Flink.SqlClient
 			return executeFunc.RunSync();
 		}
 
-		public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+		public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+            using var reader = await ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);			
+
+            return 0;  //currently Flink Sql not implement affected_row_count(always return -2), so just return 0
 		}
 		#endregion
 
@@ -120,15 +122,20 @@ namespace HEF.Flink.SqlClient
 			return executeFunc.RunSync();
 		}
 
-		public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+		public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			using var reader = await ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
+
+			if (await reader.ReadAsync(cancellationToken))
+				return reader.GetValue(0);
+
+			return null;
 		}
 		#endregion
 
 		public override void Cancel()
 		{
-			throw new NotImplementedException();
+			throw new NotSupportedException("Flink Sql not supported cancel execute command");
 		}
 
 		#region Parameter
@@ -158,9 +165,15 @@ namespace HEF.Flink.SqlClient
 		public new Task<FlinkSqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
 			=> ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
 
-		public new Task<FlinkSqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+		public new async Task<FlinkSqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			Prepare();
+
+			cancellationToken.ThrowIfCancellationRequested();
+
+			var executeResponse = await Connection.SqlSession.ExecuteStatementAsync(CommandText, CommandTimeout * 1000);
+
+			return FlinkSqlDataReader.Create(this, behavior, executeResponse);
 		}
 
 		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
@@ -172,6 +185,6 @@ namespace HEF.Flink.SqlClient
 
 		protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
 			=> await ExecuteReaderAsync(behavior, cancellationToken);
-		#endregion
+        #endregion
 	}
 }

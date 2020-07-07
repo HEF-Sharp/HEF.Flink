@@ -83,7 +83,7 @@ namespace HEF.Flink.SqlClient
 
             try
             {
-                _sqlSession = await CreateSessionAsync();
+                _sqlSession = await CreateSessionAsync(cancellationToken);
 
                 SetState(ConnectionState.Open);
             }
@@ -120,11 +120,11 @@ namespace HEF.Flink.SqlClient
             }
         }
 
-        private async ValueTask<FlinkSqlSession> CreateSessionAsync()
+        private async ValueTask<FlinkSqlSession> CreateSessionAsync(CancellationToken cancellationToken)
         {
             var sqlSession = new FlinkSqlSession(ConnectionSettings);
 
-            await sqlSession.ConnectAsync();
+            await sqlSession.ConnectAsync(cancellationToken);
 
             return sqlSession;
         }
