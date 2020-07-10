@@ -118,6 +118,7 @@ namespace HEF.Flink.SqlClient
             if (string.IsNullOrWhiteSpace(_nextResultUri))
                 return false;
 
+            cancellationToken.ThrowIfCancellationRequested();
             await FetchJobNextResultAsync();
 
             if (_currentResultSet is null)
