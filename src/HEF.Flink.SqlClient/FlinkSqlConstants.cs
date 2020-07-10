@@ -2,6 +2,6 @@
 {
     public static class FlinkSqlConstants
     {
-        public static string Job_Id = "job_id";
+        public const string Job_Id = "job_id";
     }
 }

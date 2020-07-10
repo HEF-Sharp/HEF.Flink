@@ -15,6 +15,7 @@ namespace HEF.Flink.SqlClient
         private ConnectionState _connectionState;
 
         private FlinkSqlSession _sqlSession;
+        private FlinkSqlDataReader _activeReader;
 
         public FlinkSqlConnection()
             : this(default)
@@ -64,6 +65,8 @@ namespace HEF.Flink.SqlClient
                 return _sqlSession;
             }
         }
+
+        internal bool HasActiveReader => _activeReader != null;
         #endregion
 
         #region Open
@@ -107,26 +110,21 @@ namespace HEF.Flink.SqlClient
 
         protected override DbCommand CreateDbCommand() => new FlinkSqlCommand { Connection = this };
 
-        #region Helper Functions
-        internal void SetState(ConnectionState newState)
+        #region Executing
+        internal void SetActiveReader(FlinkSqlDataReader dataReader)
         {
-            if (_connectionState != newState)
-            {
-                var previousState = _connectionState;
-                _connectionState = newState;
+            if (dataReader is null)
+                throw new ArgumentNullException(nameof(dataReader));
 
-                var eventArgs = new StateChangeEventArgs(previousState, newState);
-                OnStateChange(eventArgs);
-            }
+            if (_activeReader != null)
+                throw new InvalidOperationException("Can't replace active reader.");
+
+            _activeReader = dataReader;
         }
 
-        private async ValueTask<FlinkSqlSession> CreateSessionAsync(CancellationToken cancellationToken)
+        internal void FinishExecuting()
         {
-            var sqlSession = new FlinkSqlSession(ConnectionSettings);
-
-            await sqlSession.ConnectAsync(cancellationToken);
-
-            return sqlSession;
+            _activeReader = null;
         }
         #endregion
 
@@ -190,6 +188,29 @@ namespace HEF.Flink.SqlClient
             {
                 _isDisposed = true;
             }
+        }
+        #endregion
+
+        #region Helper Functions
+        internal void SetState(ConnectionState newState)
+        {
+            if (_connectionState != newState)
+            {
+                var previousState = _connectionState;
+                _connectionState = newState;
+
+                var eventArgs = new StateChangeEventArgs(previousState, newState);
+                OnStateChange(eventArgs);
+            }
+        }
+
+        private async ValueTask<FlinkSqlSession> CreateSessionAsync(CancellationToken cancellationToken)
+        {
+            var sqlSession = new FlinkSqlSession(ConnectionSettings);
+
+            await sqlSession.ConnectAsync(cancellationToken);
+
+            return sqlSession;
         }
         #endregion
     }

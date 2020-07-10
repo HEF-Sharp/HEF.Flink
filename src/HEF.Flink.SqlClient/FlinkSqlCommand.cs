@@ -56,6 +56,9 @@ namespace HEF.Flink.SqlClient
 			get => _commandText;
 			set
 			{
+				if (_connection?.HasActiveReader ?? false)
+					throw new InvalidOperationException("Cannot set CommandText when there is an open DataReader for this command; it must be closed first.");
+
 				_commandText = value;
 			}
 		}
@@ -65,6 +68,9 @@ namespace HEF.Flink.SqlClient
 			get => _connection;
 			set
 			{
+				if (_connection?.HasActiveReader ?? false)
+					throw new InvalidOperationException("Cannot set Connection when there is an open DataReader for this command; it must be closed first.");
+
 				_connection = value;
 			}
 		}
@@ -168,12 +174,14 @@ namespace HEF.Flink.SqlClient
 		public new async Task<FlinkSqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
 		{
 			Prepare();
-
 			cancellationToken.ThrowIfCancellationRequested();
 
 			var executeResponse = await Connection.SqlSession.ExecuteStatementAsync(CommandText, CommandTimeout * 1000);
 
-			return FlinkSqlDataReader.Create(this, behavior, executeResponse);
+			var dataReader = FlinkSqlDataReader.Create(this, behavior, executeResponse);
+			Connection.SetActiveReader(dataReader);
+
+			return dataReader;
 		}
 
 		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)

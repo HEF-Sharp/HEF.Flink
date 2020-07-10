@@ -65,6 +65,17 @@ namespace HEF.Flink.SqlClient
             return SqlGatewayApi.ExecuteStatementAsync(SessionId, requestParam);
         }
 
+        internal Task<ResultFetchResponse> FetchResultAsync(string jobId, long token)
+        {
+            if (string.IsNullOrWhiteSpace(jobId))
+                throw new ArgumentNullException(nameof(jobId));
+
+            if (token < 0)
+                throw new ArgumentOutOfRangeException(nameof(token), "token must be greater than or equal to zero.");
+
+            return SqlGatewayApi.FetchResultAsync(SessionId, jobId, token);
+        }
+
         public async ValueTask DisposeAsync()
         {
             if (string.IsNullOrWhiteSpace(SessionId))
