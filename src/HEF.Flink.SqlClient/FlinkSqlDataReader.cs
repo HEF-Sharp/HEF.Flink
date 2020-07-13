@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -55,9 +56,9 @@ namespace HEF.Flink.SqlClient
         }
         #endregion
 
-        public override object this[int ordinal] => throw new NotImplementedException();
+        public override object this[int ordinal] => GetValue(ordinal);
 
-        public override object this[string name] => throw new NotImplementedException();
+        public override object this[string name] => GetValue(GetOrdinal(name));
 
         #region Properties
         internal FlinkSqlCommand Command { get; private set; }
@@ -141,14 +142,10 @@ namespace HEF.Flink.SqlClient
 
         #region GetValue
         public override bool GetBoolean(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetBoolean();
 
         public override byte GetByte(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetByte();        
 
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
         {
@@ -171,19 +168,13 @@ namespace HEF.Flink.SqlClient
         }
 
         public override DateTime GetDateTime(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetDateTime();
 
         public override decimal GetDecimal(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetDecimal();
 
         public override double GetDouble(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetDouble();
 
         public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
 
@@ -196,18 +187,18 @@ namespace HEF.Flink.SqlClient
         {
             return typeof(T) switch
             {
-                Type type when type == typeof(bool) => (T)(object)GetBoolean(ordinal),
-                Type type when type == typeof(byte) => (T)(object)GetByte(ordinal),
-                Type type when type == typeof(short) => (T)(object)GetInt16(ordinal),
-                Type type when type == typeof(int) => (T)(object)GetInt32(ordinal),
-                Type type when type == typeof(long) => (T)(object)GetInt64(ordinal),
-                Type type when type == typeof(char) => (T)(object)GetChar(ordinal),
-                Type type when type == typeof(decimal) => (T)(object)GetDecimal(ordinal),
-                Type type when type == typeof(double) => (T)(object)GetDouble(ordinal),
-                Type type when type == typeof(float) => (T)(object)GetFloat(ordinal),
-                Type type when type == typeof(string) => (T)(object)GetString(ordinal),
-                Type type when type == typeof(DateTime) => (T)(object)GetDateTime(ordinal),
-                Type type when type == typeof(Guid) => (T)(object)GetGuid(ordinal),
+                Type type when type == typeof(bool) => ConvertChangeType<bool, T>(GetBoolean(ordinal)),
+                Type type when type == typeof(byte) => ConvertChangeType<byte, T>(GetByte(ordinal)),
+                Type type when type == typeof(short) => ConvertChangeType<short, T>(GetInt16(ordinal)),
+                Type type when type == typeof(int) => ConvertChangeType<int, T>(GetInt32(ordinal)),
+                Type type when type == typeof(long) => ConvertChangeType<long, T>(GetInt64(ordinal)),
+                Type type when type == typeof(char) => ConvertChangeType<char, T>(GetChar(ordinal)),
+                Type type when type == typeof(decimal) => ConvertChangeType<decimal, T>(GetDecimal(ordinal)),
+                Type type when type == typeof(double) => ConvertChangeType<double, T>(GetDouble(ordinal)),
+                Type type when type == typeof(float) => ConvertChangeType<float, T>(GetFloat(ordinal)),
+                Type type when type == typeof(string) => ConvertChangeType<string, T>(GetString(ordinal)),
+                Type type when type == typeof(DateTime) => ConvertChangeType<DateTime, T>(GetDateTime(ordinal)),
+                Type type when type == typeof(Guid) => ConvertChangeType<Guid, T>(GetGuid(ordinal)),
                 _ => base.GetFieldValue<T>(ordinal)
             };
         }
@@ -218,54 +209,65 @@ namespace HEF.Flink.SqlClient
         }
 
         public override Guid GetGuid(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetGuid();
 
         public override short GetInt16(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetInt16();
 
         public override int GetInt32(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetInt32();
 
         public override long GetInt64(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetInt64();
 
         public override string GetName(int ordinal)
         {
-            throw new NotImplementedException();
+            if (ordinal < 0 || ordinal >= ColumnInfos.Count)
+                throw new IndexOutOfRangeException($"value must be between 0 and {ColumnInfos.Count}.");
+
+            return ColumnInfos[ordinal].Name;
         }
 
         public override int GetOrdinal(string name)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            for (var index = 0; index < ColumnInfos.Count; index++)
+            {
+                if (string.Compare(name, ColumnInfos[index].Name, true) == 0)
+                    return index;
+            }
+
+            throw new IndexOutOfRangeException($"The column name '{name}' does not exist in the result set.");
         }
 
         public override string GetString(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetString();
 
         public override object GetValue(int ordinal)
         {
-            throw new NotImplementedException();
+            if (ordinal < 0 || ordinal >= ColumnInfos.Count)
+                throw new IndexOutOfRangeException($"value must be between 0 and {ColumnInfos.Count}.");
+
+            return GetCurrentRow()[ordinal];
         }
 
         public override int GetValues(object[] values)
         {
-            throw new NotImplementedException();
+            if (values == null)
+                throw new ArgumentNullException(nameof(values));
+
+            var count = Math.Min(values.Length, ColumnInfos.Count);
+
+            for (int i = 0; i < count; i++)
+                values[i] = GetValue(i);
+
+            return count;
         }
 
         public override bool IsDBNull(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetValue(ordinal) is null;
         #endregion
 
         #region Close
@@ -326,6 +328,27 @@ namespace HEF.Flink.SqlClient
                 throw new InvalidOperationException("There is no current result set.");
 
             return _currentResultSet;
+        }
+
+        private IList<object> GetCurrentRow() => GetCurrentResultSet().Data[_currentReadIndex];
+
+        private JsonElement GetJsonElementValue(int ordinal)
+        {
+            if (GetValue(ordinal) is JsonElement element)
+                return element;
+
+            throw new InvalidOperationException("the target value is not type of JsonElement");
+        }
+
+        private static TResult ConvertChangeType<TValue, TResult>(TValue value)
+        {
+            if (value is null)
+                return default;
+
+            if (value is TResult result)
+                return result;
+
+            return (TResult)Convert.ChangeType(value, typeof(TResult));
         }
         #endregion
     }
