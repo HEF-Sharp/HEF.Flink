@@ -154,17 +154,32 @@ namespace HEF.Flink.SqlClient
 
         public override char GetChar(int ordinal)
         {
-            throw new NotImplementedException();
+            var stringValue = GetString(ordinal);
+
+            if (string.IsNullOrWhiteSpace(stringValue))
+                throw new InvalidCastException("the target string value is null or empty");
+
+            return stringValue[0];
         }
 
         public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
         {
-            throw new NotImplementedException();
-        }
+            var stringValue = GetString(ordinal) ?? string.Empty;
 
-        public override string GetDataTypeName(int ordinal)
-        {
-            throw new NotImplementedException();
+            if (buffer is null)  //according to SqlDataReader.GetChars behavior
+                return stringValue.Length;
+
+            CheckBufferArguments(dataOffset, buffer, bufferOffset, length);
+
+            var offset = (int)dataOffset;
+            var lengthToCopy = Math.Max(0, Math.Min(stringValue.Length - offset, length));
+            if (lengthToCopy > 0)
+            {
+                stringValue.CopyTo(offset, buffer, bufferOffset, lengthToCopy);
+                return lengthToCopy;
+            }
+
+            return 0;
         }
 
         public override DateTime GetDateTime(int ordinal)
@@ -176,37 +191,8 @@ namespace HEF.Flink.SqlClient
         public override double GetDouble(int ordinal)
             => GetJsonElementValue(ordinal).GetDouble();
 
-        public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
-
-        public override Type GetFieldType(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override T GetFieldValue<T>(int ordinal)
-        {
-            return typeof(T) switch
-            {
-                Type type when type == typeof(bool) => ConvertChangeType<bool, T>(GetBoolean(ordinal)),
-                Type type when type == typeof(byte) => ConvertChangeType<byte, T>(GetByte(ordinal)),
-                Type type when type == typeof(short) => ConvertChangeType<short, T>(GetInt16(ordinal)),
-                Type type when type == typeof(int) => ConvertChangeType<int, T>(GetInt32(ordinal)),
-                Type type when type == typeof(long) => ConvertChangeType<long, T>(GetInt64(ordinal)),
-                Type type when type == typeof(char) => ConvertChangeType<char, T>(GetChar(ordinal)),
-                Type type when type == typeof(decimal) => ConvertChangeType<decimal, T>(GetDecimal(ordinal)),
-                Type type when type == typeof(double) => ConvertChangeType<double, T>(GetDouble(ordinal)),
-                Type type when type == typeof(float) => ConvertChangeType<float, T>(GetFloat(ordinal)),
-                Type type when type == typeof(string) => ConvertChangeType<string, T>(GetString(ordinal)),
-                Type type when type == typeof(DateTime) => ConvertChangeType<DateTime, T>(GetDateTime(ordinal)),
-                Type type when type == typeof(Guid) => ConvertChangeType<Guid, T>(GetGuid(ordinal)),
-                _ => base.GetFieldValue<T>(ordinal)
-            };
-        }
-
         public override float GetFloat(int ordinal)
-        {
-            throw new NotImplementedException();
-        }
+            => GetJsonElementValue(ordinal).GetSingle();
 
         public override Guid GetGuid(int ordinal)
             => GetJsonElementValue(ordinal).GetGuid();
@@ -219,28 +205,6 @@ namespace HEF.Flink.SqlClient
 
         public override long GetInt64(int ordinal)
             => GetJsonElementValue(ordinal).GetInt64();
-
-        public override string GetName(int ordinal)
-        {
-            if (ordinal < 0 || ordinal >= ColumnInfos.Count)
-                throw new IndexOutOfRangeException($"value must be between 0 and {ColumnInfos.Count}.");
-
-            return ColumnInfos[ordinal].Name;
-        }
-
-        public override int GetOrdinal(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentNullException(nameof(name));
-
-            for (var index = 0; index < ColumnInfos.Count; index++)
-            {
-                if (string.Compare(name, ColumnInfos[index].Name, true) == 0)
-                    return index;
-            }
-
-            throw new IndexOutOfRangeException($"The column name '{name}' does not exist in the result set.");
-        }
 
         public override string GetString(int ordinal)
             => GetJsonElementValue(ordinal).GetString();
@@ -268,6 +232,80 @@ namespace HEF.Flink.SqlClient
 
         public override bool IsDBNull(int ordinal)
             => GetValue(ordinal) is null;
+
+        public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
+
+        public override int GetOrdinal(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            for (var index = 0; index < ColumnInfos.Count; index++)
+            {
+                if (string.Compare(name, ColumnInfos[index].Name, true) == 0)
+                    return index;
+            }
+
+            throw new IndexOutOfRangeException($"The column name '{name}' does not exist in the result set.");
+        }
+
+        public override string GetName(int ordinal)
+            => GetFieldColumn(ordinal).Name;        
+
+        public override string GetDataTypeName(int ordinal)
+            => GetFieldType(ordinal).Name;
+
+        public override Type GetFieldType(int ordinal)
+        {
+            var column = GetFieldColumn(ordinal);
+
+            throw new NotImplementedException();
+        }
+
+        public override T GetFieldValue<T>(int ordinal)
+        {
+            return typeof(T) switch
+            {
+                Type type when type == typeof(bool) => ConvertChangeType<bool, T>(GetBoolean(ordinal)),
+                Type type when type == typeof(byte) => ConvertChangeType<byte, T>(GetByte(ordinal)),
+                Type type when type == typeof(short) => ConvertChangeType<short, T>(GetInt16(ordinal)),
+                Type type when type == typeof(int) => ConvertChangeType<int, T>(GetInt32(ordinal)),
+                Type type when type == typeof(long) => ConvertChangeType<long, T>(GetInt64(ordinal)),
+                Type type when type == typeof(char) => ConvertChangeType<char, T>(GetChar(ordinal)),
+                Type type when type == typeof(decimal) => ConvertChangeType<decimal, T>(GetDecimal(ordinal)),
+                Type type when type == typeof(double) => ConvertChangeType<double, T>(GetDouble(ordinal)),
+                Type type when type == typeof(float) => ConvertChangeType<float, T>(GetFloat(ordinal)),
+                Type type when type == typeof(string) => ConvertChangeType<string, T>(GetString(ordinal)),
+                Type type when type == typeof(DateTime) => ConvertChangeType<DateTime, T>(GetDateTime(ordinal)),
+                Type type when type == typeof(Guid) => ConvertChangeType<Guid, T>(GetGuid(ordinal)),
+
+                Type type when type == typeof(sbyte) => ConvertChangeType<sbyte, T>(GetSByte(ordinal)),
+                Type type when type == typeof(DateTimeOffset) => ConvertChangeType<DateTimeOffset, T>(GetDateTimeOffset(ordinal)),
+                Type type when type == typeof(ushort) => ConvertChangeType<ushort, T>(GetUInt16(ordinal)),
+                Type type when type == typeof(uint) => ConvertChangeType<uint, T>(GetUInt32(ordinal)),
+                Type type when type == typeof(ulong) => ConvertChangeType<ulong, T>(GetUInt64(ordinal)),
+
+                _ => base.GetFieldValue<T>(ordinal)
+            };
+        }
+
+        #region Extension Methods
+        public sbyte GetSByte(int ordinal)
+            => GetJsonElementValue(ordinal).GetSByte();
+
+        public DateTimeOffset GetDateTimeOffset(int ordinal)
+            => GetJsonElementValue(ordinal).GetDateTimeOffset();
+
+        public ushort GetUInt16(int ordinal)
+            => GetJsonElementValue(ordinal).GetUInt16();
+
+        public uint GetUInt32(int ordinal)
+            => GetJsonElementValue(ordinal).GetUInt32();
+
+        public ulong GetUInt64(int ordinal)
+            => GetJsonElementValue(ordinal).GetUInt64();
+        #endregion
+
         #endregion
 
         #region Close
@@ -332,12 +370,20 @@ namespace HEF.Flink.SqlClient
 
         private IList<object> GetCurrentRow() => GetCurrentResultSet().Data[_currentReadIndex];
 
+        private ColumnInfo GetFieldColumn(int ordinal)
+        {
+            if (ordinal < 0 || ordinal >= ColumnInfos.Count)
+                throw new IndexOutOfRangeException($"value must be between 0 and {ColumnInfos.Count}.");
+
+            return ColumnInfos[ordinal];
+        }
+
         private JsonElement GetJsonElementValue(int ordinal)
         {
             if (GetValue(ordinal) is JsonElement element)
                 return element;
 
-            throw new InvalidOperationException("the target value is not type of JsonElement");
+            throw new InvalidCastException("the target value is not type of JsonElement");
         }
 
         private static TResult ConvertChangeType<TValue, TResult>(TValue value)
@@ -349,6 +395,23 @@ namespace HEF.Flink.SqlClient
                 return result;
 
             return (TResult)Convert.ChangeType(value, typeof(TResult));
+        }
+
+        private static void CheckBufferArguments<T>(long dataOffset, T[] buffer, int bufferOffset, int length)
+        {
+            if (dataOffset < 0)
+                throw new ArgumentOutOfRangeException(nameof(dataOffset), dataOffset, "dataOffset must be non-negative");
+            if (dataOffset > int.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(dataOffset), dataOffset, "dataOffset must be a 32-bit integer");
+
+            if (length < 0)
+                throw new ArgumentOutOfRangeException(nameof(length), length, "length must be non-negative");
+            if (bufferOffset < 0)
+                throw new ArgumentOutOfRangeException(nameof(bufferOffset), bufferOffset, "bufferOffset must be non-negative");
+            if (bufferOffset >= buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(bufferOffset), bufferOffset, "bufferOffset must be within the buffer");
+            if (checked(bufferOffset + length) > buffer.Length)
+                throw new ArgumentException("bufferOffset + length cannot exceed buffer.Length", nameof(length));
         }
         #endregion
     }
