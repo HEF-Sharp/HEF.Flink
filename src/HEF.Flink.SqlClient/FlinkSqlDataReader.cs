@@ -259,7 +259,9 @@ namespace HEF.Flink.SqlClient
         {
             var column = GetFieldColumn(ordinal);
 
-            throw new NotImplementedException();
+            var sqlDataType = FlinkSqlDataTypeParser.ParseFromString(column.Type);
+
+            return sqlDataType.ClrType;
         }
 
         public override T GetFieldValue<T>(int ordinal)
