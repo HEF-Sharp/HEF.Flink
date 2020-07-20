@@ -230,15 +230,11 @@ namespace HEF.Flink.SqlClient
         {
             if (wordTokens.Length == 2)
             {
-                if (string.Compare(wordTokens[1], FlinkSqlZonedTimestampType.TimezoneDefine, true) == 0)
-                {
+                if (string.Compare(wordTokens[1], FlinkSqlZonedTimestampType.TimezoneDefine, true) == 0)                
                     return ParseZonedTimestampType(wordTokens[0]);
-                }
 
-                if (string.Compare(wordTokens[1], FlinkSqlLocalZonedTimestampType.TimezoneDefine, true) == 0)
-                {
+                if (string.Compare(wordTokens[1], FlinkSqlLocalZonedTimestampType.TimezoneDefine, true) == 0)                
                     return ParseLocalZonedTimestampType(wordTokens[0]);
-                }
             }
             else if (wordTokens.Length == 1)
             {
