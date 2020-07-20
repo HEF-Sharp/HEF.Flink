@@ -270,6 +270,8 @@ namespace HEF.Flink.SqlClient
 
     public class FlinkSqlZonedTimestampType : FlinkSqlTimestampType
     {
+        public const string TimezoneDefine = "WITH TIME ZONE";
+
         public FlinkSqlZonedTimestampType()
             : base()
         { }
@@ -280,11 +282,13 @@ namespace HEF.Flink.SqlClient
 
         public override Type ClrType => typeof(DateTimeOffset);
 
-        public override string ToString() => $"{FlinkSqlDataTypes.TIMESTAMP}({Precision}) WITH TIME ZONE";
+        public override string ToString() => $"{FlinkSqlDataTypes.TIMESTAMP}({Precision}) {TimezoneDefine}";
     }
 
     public class FlinkSqlLocalZonedTimestampType : FlinkSqlTimestampType
     {
+        public const string TimezoneDefine = "WITH LOCAL TIME ZONE";
+
         public FlinkSqlLocalZonedTimestampType()
             : base()
         { }
@@ -295,7 +299,7 @@ namespace HEF.Flink.SqlClient
 
         public override Type ClrType => typeof(DateTime);
 
-        public override string ToString() => $"{FlinkSqlDataTypes.TIMESTAMP}({Precision}) WITH LOCAL TIME ZONE";
+        public override string ToString() => $"{FlinkSqlDataTypes.TIMESTAMP}({Precision}) {TimezoneDefine}";
     }
     #endregion
 }

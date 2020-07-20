@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace HEF.Flink.SqlClient
 {
     public class FlinkSqlDataReader : DbDataReader
     {
+        internal static readonly UTF8Encoding Utf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
         private string _jobId;
 
         private ExecuteResultSet _currentResultSet;
@@ -149,7 +152,27 @@ namespace HEF.Flink.SqlClient
 
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
         {
-            throw new NotImplementedException();
+            var sqlDataType = GetFieldDataType(ordinal);
+
+            if (sqlDataType.ClrType != typeof(byte[]) && sqlDataType.ClrType != typeof(string))
+                throw new InvalidCastException($"can't convert {sqlDataType} to bytes");
+
+            var rawBytes = GetRawBytes(ordinal);
+
+            if (buffer is null) //according to SqlDataReader.GetBytes behavior
+                return rawBytes.Length;
+
+            CheckBufferArguments(dataOffset, buffer, bufferOffset, length);
+
+            var offset = (int)dataOffset;
+            var lengthToCopy = Math.Max(0, Math.Min(rawBytes.Length - offset, length));
+            if (lengthToCopy > 0)
+            {
+                rawBytes.AsSpan().Slice(offset, lengthToCopy).CopyTo(buffer.AsSpan().Slice(bufferOffset));
+                return lengthToCopy;
+            }
+
+            return 0;
         }
 
         public override char GetChar(int ordinal)
@@ -256,13 +279,7 @@ namespace HEF.Flink.SqlClient
             => GetFieldType(ordinal).Name;
 
         public override Type GetFieldType(int ordinal)
-        {
-            var column = GetFieldColumn(ordinal);
-
-            var sqlDataType = FlinkSqlDataTypeParser.ParseFromString(column.Type);
-
-            return sqlDataType.ClrType;
-        }
+            => GetFieldDataType(ordinal).ClrType;
 
         public override T GetFieldValue<T>(int ordinal)
         {
@@ -306,6 +323,12 @@ namespace HEF.Flink.SqlClient
 
         public ulong GetUInt64(int ordinal)
             => GetJsonElementValue(ordinal).GetUInt64();
+
+        public string GetRawText(int ordinal)
+            => GetJsonElementValue(ordinal).GetRawText();
+
+        public byte[] GetRawBytes(int ordinal)
+            => Utf8Encoding.GetBytes(GetRawText(ordinal));        
         #endregion
 
         #endregion
@@ -380,13 +403,20 @@ namespace HEF.Flink.SqlClient
             return ColumnInfos[ordinal];
         }
 
+        private FlinkSqlDataType GetFieldDataType(int ordinal)
+        {
+            var column = GetFieldColumn(ordinal);
+
+            return FlinkSqlDataTypeParser.ParseFromString(column.Type);
+        }
+
         private JsonElement GetJsonElementValue(int ordinal)
         {
             if (GetValue(ordinal) is JsonElement element)
                 return element;
 
             throw new InvalidCastException("the target value is not type of JsonElement");
-        }
+        }        
 
         private static TResult ConvertChangeType<TValue, TResult>(TValue value)
         {

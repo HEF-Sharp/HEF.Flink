@@ -1,5 +1,6 @@
 ﻿using HEF.Util;
 using System;
+using System.Linq;
 
 namespace HEF.Flink.SqlClient
 {
@@ -67,7 +68,19 @@ namespace HEF.Flink.SqlClient
             if (string.IsNullOrWhiteSpace(wordToken))
                 throw new ArgumentNullException(nameof(wordToken));
 
-            throw new NotImplementedException();
+            var startParameterIndex = wordToken.IndexOf(StartParameterChar);
+            var endParameterIndex = wordToken.IndexOf(EndParameterChar);
+            if (startParameterIndex != -1 && endParameterIndex != -1
+                && startParameterIndex < endParameterIndex)
+            {
+                var parameterStr = wordToken.Substring(startParameterIndex + 1,
+                    endParameterIndex - startParameterIndex - 1);
+
+                return parameterStr.Split(CommaChar, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Trim()).ToArray();
+            }
+
+            return Array.Empty<string>();
         }
         #endregion
 
@@ -215,7 +228,56 @@ namespace HEF.Flink.SqlClient
 
         private static FlinkSqlTimestampType ParseTimestampType(string[] wordTokens)
         {
-            throw new NotImplementedException();
+            if (wordTokens.Length == 2)
+            {
+                if (string.Compare(wordTokens[1], FlinkSqlZonedTimestampType.TimezoneDefine, true) == 0)
+                {
+                    return ParseZonedTimestampType(wordTokens[0]);
+                }
+
+                if (string.Compare(wordTokens[1], FlinkSqlLocalZonedTimestampType.TimezoneDefine, true) == 0)
+                {
+                    return ParseLocalZonedTimestampType(wordTokens[0]);
+                }
+            }
+            else if (wordTokens.Length == 1)
+            {
+                var parameters = ParseParameters(wordTokens[0]);
+
+                if (parameters.IsEmpty())
+                    return new FlinkSqlTimestampType();
+
+                if (parameters.Length == 1)
+                    return new FlinkSqlTimestampType(parameters[0].ParseInt());
+            }
+
+            throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlTimestampType).Name}");
+        }
+
+        private static FlinkSqlZonedTimestampType ParseZonedTimestampType(string wordToken)
+        {
+            var parameters = ParseParameters(wordToken);
+
+            if (parameters.IsEmpty())
+                return new FlinkSqlZonedTimestampType();
+
+            if (parameters.Length == 1)
+                return new FlinkSqlZonedTimestampType(parameters[0].ParseInt());
+
+            throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlZonedTimestampType).Name}");
+        }
+
+        private static FlinkSqlLocalZonedTimestampType ParseLocalZonedTimestampType(string wordToken)
+        {
+            var parameters = ParseParameters(wordToken);
+
+            if (parameters.IsEmpty())
+                return new FlinkSqlLocalZonedTimestampType();
+
+            if (parameters.Length == 1)
+                return new FlinkSqlLocalZonedTimestampType(parameters[0].ParseInt());
+
+            throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlLocalZonedTimestampType).Name}");
         }
         #endregion
     }
