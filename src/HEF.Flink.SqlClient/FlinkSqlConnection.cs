@@ -16,6 +16,7 @@ namespace HEF.Flink.SqlClient
 
         private FlinkSqlSession _sqlSession;
         private FlinkSqlDataReader _activeReader;
+        private FlinkSqlMetaProvider _sqlMetaProvider;
 
         public FlinkSqlConnection()
             : this(default)
@@ -27,7 +28,7 @@ namespace HEF.Flink.SqlClient
         }
 
         #region Properties
-        public override string ConnectionString 
+        public override string ConnectionString
         {
             get => _connectionString;
             set
@@ -44,7 +45,7 @@ namespace HEF.Flink.SqlClient
 
         protected override DbProviderFactory DbProviderFactory => FlinkSqlClientFactory.Instance;
 
-        public override string Database => throw new NotImplementedException();
+        public override string Database => GetCurrentDatabase();        
 
         public override string DataSource => ConnectionSettings.Server;
 
@@ -67,6 +68,19 @@ namespace HEF.Flink.SqlClient
         }
 
         internal bool HasActiveReader => _activeReader != null;
+
+        internal FlinkSqlMetaProvider SqlMetaProvider
+        {
+            get
+            {
+                VerifyNotDisposed();
+
+                if (State != ConnectionState.Open)
+                    throw new InvalidOperationException($"Connection must be Open; current state is {State}");
+
+                return _sqlMetaProvider ??= new FlinkSqlMetaProvider(this);
+            }
+        }
         #endregion
 
         #region Open
@@ -98,17 +112,36 @@ namespace HEF.Flink.SqlClient
         }
         #endregion
 
-        public override void ChangeDatabase(string databaseName)
+        #region Database
+        public string GetCurrentDatabase()
         {
-            throw new NotImplementedException();
+            Func<Task<string>> GetDatabaseFunc = () => SqlMetaProvider.GetCurrentDatabaseAsync(CancellationToken.None);
+
+            return GetDatabaseFunc.RunSync();
         }
 
+        public override void ChangeDatabase(string databaseName)
+        {
+            Func<Task> changeDatabaseFunc = () => SqlMetaProvider.ChangeDatabaseAsync(databaseName, CancellationToken.None);
+
+            changeDatabaseFunc.RunSync();
+        }
+        #endregion
+
+        #region Transaction
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
             throw new NotSupportedException("Flink Sql not supported transaction");
         }
+        #endregion
+
+        #region Command
+        public new FlinkSqlCommand CreateCommand() => (FlinkSqlCommand)base.CreateCommand();
+
+        public FlinkSqlCommand CreateCommand(string commandText) => new FlinkSqlCommand(commandText, this);
 
         protected override DbCommand CreateDbCommand() => new FlinkSqlCommand { Connection = this };
+        #endregion
 
         #region Executing
         internal void SetActiveReader(FlinkSqlDataReader dataReader)

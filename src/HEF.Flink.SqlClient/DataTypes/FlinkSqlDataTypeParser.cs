@@ -57,7 +57,7 @@ namespace HEF.Flink.SqlClient
         private static TDataType ParseNoParameterType<TDataType>(string[] wordTokens)
             where TDataType : FlinkSqlDataType, new()
         {
-            if (wordTokens.Length == 1 && !wordTokens[0].Contains(StartParameterChar))
+            if (!wordTokens[0].Contains(StartParameterChar))
                 return new TDataType();
 
             throw new InvalidOperationException($"failed parse to {typeof(TDataType).Name}");
@@ -92,69 +92,57 @@ namespace HEF.Flink.SqlClient
         #region String
         private static FlinkSqlCharType ParseCharType(string[] wordTokens)
         {
-            if (wordTokens.Length == 1)
-            {
-                var parameters = ParseParameters(wordTokens[0]);
+            var parameters = ParseParameters(wordTokens[0]);
 
-                if (parameters.IsEmpty())
-                    return new FlinkSqlCharType();
+            if (parameters.IsEmpty())
+                return new FlinkSqlCharType();
 
-                if (parameters.Length == 1)
-                    return new FlinkSqlCharType(parameters[0].ParseInt());
-            }
+            if (parameters.Length == 1)
+                return new FlinkSqlCharType(parameters[0].ParseInt());            
 
             throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlCharType).Name}");
         }
 
         private static FlinkSqlVarCharType ParseVarCharType(string[] wordTokens)
         {
-            if (wordTokens.Length == 1)
-            {
-                var parameters = ParseParameters(wordTokens[0]);
+            var parameters = ParseParameters(wordTokens[0]);
 
-                if (parameters.IsEmpty())
-                    return new FlinkSqlVarCharType();
+            if (parameters.IsEmpty())
+                return new FlinkSqlVarCharType();
 
-                if (parameters.Length == 1)
-                    return new FlinkSqlVarCharType(parameters[0].ParseInt());
-            }
+            if (parameters.Length == 1)
+                return new FlinkSqlVarCharType(parameters[0].ParseInt());            
 
             throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlVarCharType).Name}");
         }
 
         private static FlinkSqlStringType ParseStringType(string[] wordTokens)
-            => ParseNoParameterType<FlinkSqlStringType>(wordTokens);        
+            => ParseNoParameterType<FlinkSqlStringType>(wordTokens);
         #endregion
 
         #region Binary
         private static FlinkSqlBinaryType ParseBinaryType(string[] wordTokens)
         {
-            if (wordTokens.Length == 1)
-            {
-                var parameters = ParseParameters(wordTokens[0]);
+            var parameters = ParseParameters(wordTokens[0]);
 
-                if (parameters.IsEmpty())
-                    return new FlinkSqlBinaryType();
+            if (parameters.IsEmpty())
+                return new FlinkSqlBinaryType();
 
-                if (parameters.Length == 1)
-                    return new FlinkSqlBinaryType(parameters[0].ParseInt());
-            }
+            if (parameters.Length == 1)
+                return new FlinkSqlBinaryType(parameters[0].ParseInt());
 
             throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlBinaryType).Name}");
         }
 
         private static FlinkSqlVarBinaryType ParseVarBinaryType(string[] wordTokens)
         {
-            if (wordTokens.Length == 1)
-            {
-                var parameters = ParseParameters(wordTokens[0]);
+            var parameters = ParseParameters(wordTokens[0]);
 
-                if (parameters.IsEmpty())
-                    return new FlinkSqlVarBinaryType();
+            if (parameters.IsEmpty())
+                return new FlinkSqlVarBinaryType();
 
-                if (parameters.Length == 1)
-                    return new FlinkSqlVarBinaryType(parameters[0].ParseInt());
-            }
+            if (parameters.Length == 1)
+                return new FlinkSqlVarBinaryType(parameters[0].ParseInt());
 
             throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlVarBinaryType).Name}");
         }
@@ -166,19 +154,16 @@ namespace HEF.Flink.SqlClient
         #region Decimal
         private static FlinkSqlDecimalType ParseDecimalType(string[] wordTokens)
         {
-            if (wordTokens.Length == 1)
-            {
-                var parameters = ParseParameters(wordTokens[0]);
+            var parameters = ParseParameters(wordTokens[0]);
 
-                if (parameters.IsEmpty())
-                    return new FlinkSqlDecimalType();
+            if (parameters.IsEmpty())
+                return new FlinkSqlDecimalType();
 
-                if (parameters.Length == 1)
-                    return new FlinkSqlDecimalType(parameters[0].ParseInt());
+            if (parameters.Length == 1)
+                return new FlinkSqlDecimalType(parameters[0].ParseInt());
 
-                if (parameters.Length == 2)
-                    return new FlinkSqlDecimalType(parameters[0].ParseInt(), parameters[1].ParseInt());
-            }
+            if (parameters.Length == 2)
+                return new FlinkSqlDecimalType(parameters[0].ParseInt(), parameters[1].ParseInt());
 
             throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlDecimalType).Name}");
         }
@@ -212,16 +197,13 @@ namespace HEF.Flink.SqlClient
 
         private static FlinkSqlTimeType ParseTimeType(string[] wordTokens)
         {
-            if (wordTokens.Length == 1)
-            {
-                var parameters = ParseParameters(wordTokens[0]);
+            var parameters = ParseParameters(wordTokens[0]);
 
-                if (parameters.IsEmpty())
-                    return new FlinkSqlTimeType();
+            if (parameters.IsEmpty())
+                return new FlinkSqlTimeType();
 
-                if (parameters.Length == 1)
-                    return new FlinkSqlTimeType(parameters[0].ParseInt());
-            }
+            if (parameters.Length == 1)
+                return new FlinkSqlTimeType(parameters[0].ParseInt());
 
             throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlTimeType).Name}");
         }
@@ -230,22 +212,20 @@ namespace HEF.Flink.SqlClient
         {
             if (wordTokens.Length == 2)
             {
-                if (string.Compare(wordTokens[1], FlinkSqlZonedTimestampType.TimezoneDefine, true) == 0)                
+                if (wordTokens[1].IndexOf(FlinkSqlZonedTimestampType.TimezoneDefine, StringComparison.OrdinalIgnoreCase) != -1)                
                     return ParseZonedTimestampType(wordTokens[0]);
 
-                if (string.Compare(wordTokens[1], FlinkSqlLocalZonedTimestampType.TimezoneDefine, true) == 0)                
+                if (wordTokens[1].IndexOf(FlinkSqlLocalZonedTimestampType.TimezoneDefine, StringComparison.OrdinalIgnoreCase) != -1)
                     return ParseLocalZonedTimestampType(wordTokens[0]);
             }
-            else if (wordTokens.Length == 1)
-            {
-                var parameters = ParseParameters(wordTokens[0]);
+            
+            var parameters = ParseParameters(wordTokens[0]);
 
-                if (parameters.IsEmpty())
-                    return new FlinkSqlTimestampType();
+            if (parameters.IsEmpty())
+                return new FlinkSqlTimestampType();
 
-                if (parameters.Length == 1)
-                    return new FlinkSqlTimestampType(parameters[0].ParseInt());
-            }
+            if (parameters.Length == 1)
+                return new FlinkSqlTimestampType(parameters[0].ParseInt());            
 
             throw new InvalidOperationException($"failed parse to {typeof(FlinkSqlTimestampType).Name}");
         }

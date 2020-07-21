@@ -137,6 +137,23 @@ namespace HEF.Flink.SqlClient
 
 			return null;
 		}
+
+		public TResult ExecuteScalar<TResult>()
+		{
+			Func<Task<TResult>> executeFunc = () => ExecuteScalarAsync<TResult>(CancellationToken.None);
+
+			return executeFunc.RunSync();
+		}
+
+		public async Task<TResult> ExecuteScalarAsync<TResult>(CancellationToken cancellationToken)
+		{
+			using var reader = await ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
+
+			if (await reader.ReadAsync(cancellationToken))
+				return reader.GetFieldValue<TResult>(0);
+
+			return default;
+		}
 		#endregion
 
 		public override void Cancel()
@@ -177,6 +194,8 @@ namespace HEF.Flink.SqlClient
 			cancellationToken.ThrowIfCancellationRequested();
 
 			var executeResponse = await Connection.SqlSession.ExecuteStatementAsync(CommandText, CommandTimeout * 1000);
+			if (executeResponse is null)
+				throw new FlinkSqlException("execute statement failed");
 
 			var dataReader = FlinkSqlDataReader.Create(this, behavior, executeResponse);
 			Connection.SetActiveReader(dataReader);

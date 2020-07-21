@@ -59,10 +59,6 @@ namespace HEF.Flink.SqlClient
         }
         #endregion
 
-        public override object this[int ordinal] => GetValue(ordinal);
-
-        public override object this[string name] => GetValue(GetOrdinal(name));
-
         #region Properties
         internal FlinkSqlCommand Command { get; private set; }
 
@@ -81,6 +77,10 @@ namespace HEF.Flink.SqlClient
         public override bool IsClosed => Command is null;
 
         public override int RecordsAffected => throw new NotSupportedException("Flink Sql currently not implement affected_row_count");
+
+        public override object this[int ordinal] => GetValue(ordinal);
+
+        public override object this[string name] => GetValue(GetOrdinal(name));
         #endregion
 
         #region NextResult
@@ -135,6 +135,8 @@ namespace HEF.Flink.SqlClient
         private async Task FetchJobNextResultAsync()
         {
             var fetchResponse = await Connection.SqlSession.FetchResultAsync(_jobId, ++_token);
+            if (fetchResponse is null)
+                throw new FlinkSqlException("fetch result failed");
 
             _nextResultUri = fetchResponse.NextResultUri;
 
@@ -232,29 +234,8 @@ namespace HEF.Flink.SqlClient
         public override string GetString(int ordinal)
             => GetJsonElementValue(ordinal).GetString();
 
-        public override object GetValue(int ordinal)
-        {
-            if (ordinal < 0 || ordinal >= ColumnInfos.Count)
-                throw new IndexOutOfRangeException($"value must be between 0 and {ColumnInfos.Count}.");
-
-            return GetCurrentRow()[ordinal];
-        }
-
-        public override int GetValues(object[] values)
-        {
-            if (values == null)
-                throw new ArgumentNullException(nameof(values));
-
-            var count = Math.Min(values.Length, ColumnInfos.Count);
-
-            for (int i = 0; i < count; i++)
-                values[i] = GetValue(i);
-
-            return count;
-        }
-
         public override bool IsDBNull(int ordinal)
-            => GetValue(ordinal) is null;
+            => GetJsonElementValue(ordinal).ValueKind == JsonValueKind.Null;
 
         public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
 
@@ -281,6 +262,42 @@ namespace HEF.Flink.SqlClient
         public override Type GetFieldType(int ordinal)
             => GetFieldDataType(ordinal).ClrType;
 
+        public override object GetValue(int ordinal)
+        {
+            var fieldType = GetFieldType(ordinal);
+
+            return fieldType switch
+            {
+                Type type when type == typeof(bool) => GetBoolean(ordinal),
+                Type type when type == typeof(string) => GetString(ordinal),
+                Type type when type == typeof(byte[]) => GetRawBytes(ordinal),
+                Type type when type == typeof(decimal) => GetDecimal(ordinal),
+                Type type when type == typeof(byte) => GetByte(ordinal),
+                Type type when type == typeof(short) => GetInt16(ordinal),
+                Type type when type == typeof(int) => GetInt32(ordinal),
+                Type type when type == typeof(long) => GetInt64(ordinal),
+                Type type when type == typeof(float) => GetFloat(ordinal),
+                Type type when type == typeof(double) => GetDouble(ordinal),
+                Type type when type == typeof(DateTime) => GetDateTime(ordinal),
+                Type type when type == typeof(DateTimeOffset) => GetDateTimeOffset(ordinal),
+
+                _ => GetJsonElementValue(ordinal)
+            };
+        }
+
+        public override int GetValues(object[] values)
+        {
+            if (values == null)
+                throw new ArgumentNullException(nameof(values));
+
+            var count = Math.Min(values.Length, ColumnInfos.Count);
+
+            for (int i = 0; i < count; i++)
+                values[i] = GetValue(i);
+
+            return count;
+        }
+
         public override T GetFieldValue<T>(int ordinal)
         {
             return typeof(T) switch
@@ -289,11 +306,11 @@ namespace HEF.Flink.SqlClient
                 Type type when type == typeof(byte) => ConvertChangeType<byte, T>(GetByte(ordinal)),
                 Type type when type == typeof(short) => ConvertChangeType<short, T>(GetInt16(ordinal)),
                 Type type when type == typeof(int) => ConvertChangeType<int, T>(GetInt32(ordinal)),
-                Type type when type == typeof(long) => ConvertChangeType<long, T>(GetInt64(ordinal)),
-                Type type when type == typeof(char) => ConvertChangeType<char, T>(GetChar(ordinal)),
+                Type type when type == typeof(long) => ConvertChangeType<long, T>(GetInt64(ordinal)),                
                 Type type when type == typeof(decimal) => ConvertChangeType<decimal, T>(GetDecimal(ordinal)),
                 Type type when type == typeof(double) => ConvertChangeType<double, T>(GetDouble(ordinal)),
                 Type type when type == typeof(float) => ConvertChangeType<float, T>(GetFloat(ordinal)),
+                Type type when type == typeof(char) => ConvertChangeType<char, T>(GetChar(ordinal)),
                 Type type when type == typeof(string) => ConvertChangeType<string, T>(GetString(ordinal)),
                 Type type when type == typeof(DateTime) => ConvertChangeType<DateTime, T>(GetDateTime(ordinal)),
                 Type type when type == typeof(Guid) => ConvertChangeType<Guid, T>(GetGuid(ordinal)),
@@ -328,7 +345,7 @@ namespace HEF.Flink.SqlClient
             => GetJsonElementValue(ordinal).GetRawText();
 
         public byte[] GetRawBytes(int ordinal)
-            => Utf8Encoding.GetBytes(GetRawText(ordinal));        
+            => Utf8Encoding.GetBytes(GetRawText(ordinal));
         #endregion
 
         #endregion
@@ -412,11 +429,14 @@ namespace HEF.Flink.SqlClient
 
         private JsonElement GetJsonElementValue(int ordinal)
         {
-            if (GetValue(ordinal) is JsonElement element)
+            if (ordinal < 0 || ordinal >= ColumnInfos.Count)
+                throw new IndexOutOfRangeException($"value must be between 0 and {ColumnInfos.Count}.");
+
+            if (GetCurrentRow()[ordinal] is JsonElement element)
                 return element;
 
             throw new InvalidCastException("the target value is not type of JsonElement");
-        }        
+        }
 
         private static TResult ConvertChangeType<TValue, TResult>(TValue value)
         {
