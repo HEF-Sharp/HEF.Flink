@@ -45,7 +45,7 @@ namespace HEF.Flink.SqlClient
 
         protected override DbProviderFactory DbProviderFactory => FlinkSqlClientFactory.Instance;
 
-        public override string Database => GetCurrentDatabase();        
+        public override string Database => GetCurrentDatabase();
 
         public override string DataSource => ConnectionSettings.Server;
 
