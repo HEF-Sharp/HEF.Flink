@@ -122,8 +122,15 @@ namespace HEF.Flink.SqlClient
             if (string.IsNullOrWhiteSpace(_nextResultUri))
                 return false;
 
-            cancellationToken.ThrowIfCancellationRequested();
-            await FetchJobNextResultAsync();
+            do
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await FetchJobNextResultAsync();
+            }
+            //sometimes fetch next result return empty data, in case of this do fetch next result again
+            while (_currentResultSet != null
+            && _currentResultSet.Data.Count == 0
+            && !string.IsNullOrWhiteSpace(_nextResultUri));
 
             if (_currentResultSet is null)
                 return false;
@@ -150,7 +157,7 @@ namespace HEF.Flink.SqlClient
             => GetJsonElementValue(ordinal).GetBoolean();
 
         public override byte GetByte(int ordinal)
-            => GetJsonElementValue(ordinal).GetByte();        
+            => GetJsonElementValue(ordinal).GetByte();
 
         public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
         {
@@ -235,7 +242,7 @@ namespace HEF.Flink.SqlClient
             => GetJsonElementValue(ordinal).GetString();
 
         public override bool IsDBNull(int ordinal)
-            => GetJsonElementValue(ordinal).ValueKind == JsonValueKind.Null;
+            => GetRawValue(ordinal) is null || GetJsonElementValue(ordinal).ValueKind == JsonValueKind.Null;
 
         public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
 
@@ -342,7 +349,17 @@ namespace HEF.Flink.SqlClient
             => GetJsonElementValue(ordinal).GetUInt64();
 
         public string GetRawText(int ordinal)
-            => GetJsonElementValue(ordinal).GetRawText();
+        {
+            var jsonElement = GetJsonElementValue(ordinal);
+            var rawText = jsonElement.GetRawText();
+
+            if (jsonElement.ValueKind == JsonValueKind.String)
+            {
+                rawText = rawText[1..^1]; //for string remove Quotes
+            }
+
+            return rawText;
+        }
 
         public byte[] GetRawBytes(int ordinal)
             => Utf8Encoding.GetBytes(GetRawText(ordinal));
@@ -370,23 +387,6 @@ namespace HEF.Flink.SqlClient
         #endregion
 
         #region IDisposable
-        protected override void Dispose(bool disposing)
-        {
-            try
-            {
-                if (disposing)
-                {
-                    Func<Task> closeFunc = () => CloseAsync();
-
-                    closeFunc.RunSync();
-                }
-            }
-            finally
-            {
-                base.Dispose(disposing);
-            }
-        }
-
         public override async ValueTask DisposeAsync()
         {
             await CloseAsync();
@@ -427,12 +427,17 @@ namespace HEF.Flink.SqlClient
             return FlinkSqlDataTypeParser.ParseFromString(column.Type);
         }
 
-        private JsonElement GetJsonElementValue(int ordinal)
+        private object GetRawValue(int ordinal)
         {
             if (ordinal < 0 || ordinal >= ColumnInfos.Count)
                 throw new IndexOutOfRangeException($"value must be between 0 and {ColumnInfos.Count}.");
 
-            if (GetCurrentRow()[ordinal] is JsonElement element)
+            return GetCurrentRow()[ordinal];
+        }
+
+        private JsonElement GetJsonElementValue(int ordinal)
+        {
+            if (GetRawValue(ordinal) is JsonElement element)
                 return element;
 
             throw new InvalidCastException("the target value is not type of JsonElement");

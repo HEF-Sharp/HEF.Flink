@@ -12,7 +12,7 @@ namespace HEF.Flink.SqlApiClient.Test
 
             services.AddHttpApi<IFlinkSqlGatewayApi>(o =>
             {
-                o.HttpHost = new Uri("http://172.24.25.254:8083/v1/");
+                o.HttpHost = new Uri("http://172.29.55.67:8083/v1/");
             });
 
             Provider = services.BuildServiceProvider();
