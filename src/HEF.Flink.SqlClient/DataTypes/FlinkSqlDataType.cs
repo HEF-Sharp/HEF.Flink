@@ -239,7 +239,7 @@ namespace HEF.Flink.SqlClient
 
         public int Precision { get; }
 
-        public override Type ClrType => typeof(DateTime);
+        public override Type ClrType => typeof(TimeSpan);
 
         public override string ToString() => $"{FlinkSqlDataTypes.TIME}({Precision})";
     }

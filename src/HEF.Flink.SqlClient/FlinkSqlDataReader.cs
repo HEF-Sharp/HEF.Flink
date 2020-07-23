@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,8 +13,6 @@ namespace HEF.Flink.SqlClient
 {
     public class FlinkSqlDataReader : DbDataReader
     {
-        internal static readonly UTF8Encoding Utf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-
         private string _jobId;
 
         private ExecuteResultSet _currentResultSet;
@@ -286,6 +283,7 @@ namespace HEF.Flink.SqlClient
                 Type type when type == typeof(float) => GetFloat(ordinal),
                 Type type when type == typeof(double) => GetDouble(ordinal),
                 Type type when type == typeof(DateTime) => GetDateTime(ordinal),
+                Type type when type == typeof(TimeSpan) => GetTimeSpan(ordinal),
                 Type type when type == typeof(DateTimeOffset) => GetDateTimeOffset(ordinal),
 
                 _ => GetJsonElementValue(ordinal)
@@ -313,7 +311,7 @@ namespace HEF.Flink.SqlClient
                 Type type when type == typeof(byte) => ConvertChangeType<byte, T>(GetByte(ordinal)),
                 Type type when type == typeof(short) => ConvertChangeType<short, T>(GetInt16(ordinal)),
                 Type type when type == typeof(int) => ConvertChangeType<int, T>(GetInt32(ordinal)),
-                Type type when type == typeof(long) => ConvertChangeType<long, T>(GetInt64(ordinal)),                
+                Type type when type == typeof(long) => ConvertChangeType<long, T>(GetInt64(ordinal)),
                 Type type when type == typeof(decimal) => ConvertChangeType<decimal, T>(GetDecimal(ordinal)),
                 Type type when type == typeof(double) => ConvertChangeType<double, T>(GetDouble(ordinal)),
                 Type type when type == typeof(float) => ConvertChangeType<float, T>(GetFloat(ordinal)),
@@ -323,6 +321,7 @@ namespace HEF.Flink.SqlClient
                 Type type when type == typeof(Guid) => ConvertChangeType<Guid, T>(GetGuid(ordinal)),
 
                 Type type when type == typeof(sbyte) => ConvertChangeType<sbyte, T>(GetSByte(ordinal)),
+                Type type when type == typeof(TimeSpan) => ConvertChangeType<TimeSpan, T>(GetTimeSpan(ordinal)),
                 Type type when type == typeof(DateTimeOffset) => ConvertChangeType<DateTimeOffset, T>(GetDateTimeOffset(ordinal)),
                 Type type when type == typeof(ushort) => ConvertChangeType<ushort, T>(GetUInt16(ordinal)),
                 Type type when type == typeof(uint) => ConvertChangeType<uint, T>(GetUInt32(ordinal)),
@@ -335,6 +334,16 @@ namespace HEF.Flink.SqlClient
         #region Extension Methods
         public sbyte GetSByte(int ordinal)
             => GetJsonElementValue(ordinal).GetSByte();
+
+        public TimeSpan GetTimeSpan(int ordinal)
+        {
+            var timeStr = GetJsonElementValue(ordinal).GetString();
+
+            if (TimeSpan.TryParse(timeStr, out TimeSpan result))
+                return result;
+
+            throw new InvalidCastException("Can't convert target value to TimeSpan");
+        }
 
         public DateTimeOffset GetDateTimeOffset(int ordinal)
             => GetJsonElementValue(ordinal).GetDateTimeOffset();
@@ -362,7 +371,7 @@ namespace HEF.Flink.SqlClient
         }
 
         public byte[] GetRawBytes(int ordinal)
-            => Utf8Encoding.GetBytes(GetRawText(ordinal));
+            => Convert.FromBase64String(GetRawText(ordinal));
         #endregion
 
         #endregion

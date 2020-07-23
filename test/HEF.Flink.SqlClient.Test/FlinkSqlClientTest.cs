@@ -1,4 +1,6 @@
 using HEF.Util;
+using System;
+using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -93,11 +95,11 @@ namespace HEF.Flink.SqlClient.Test
 
             Assert.True(await reader.ReadAsync());
             Assert.Equal("str1", reader.GetString(0));
-            Assert.Equal("str2", reader.GetString(1));
+            Assert.Equal("str2", reader.GetFieldValue<string>(1));
             Assert.Equal("str3", reader.GetString(2));
-            Assert.Equal("str4", reader.GetRawText(3).FromBase64String());
-            Assert.Equal("str5", reader.GetRawText(4).FromBase64String());
-            Assert.Equal("str6", reader.GetRawText(5).FromBase64String());
+            Assert.Equal("str4", Encoding.UTF8.GetString(reader.GetRawBytes(3)));
+            Assert.Equal("str5", Encoding.UTF8.GetString(reader.GetRawBytes(4)));
+            Assert.Equal("str6", Encoding.UTF8.GetString(reader.GetRawBytes(5)));
             Assert.True(reader.IsDBNull(6));
             Assert.False(await reader.ReadAsync());
         }
@@ -144,6 +146,28 @@ namespace HEF.Flink.SqlClient.Test
             Assert.Equal(0.2f, reader.GetFloat(0));
             Assert.Equal(0.4d, reader.GetDouble(1));
             Assert.Equal(123.45m, reader.GetDecimal(2));            
+            Assert.True(reader.IsDBNull(3));
+            Assert.False(await reader.ReadAsync());
+        }
+
+        [Fact]
+        public async Task TestReaderGetDateTime()
+        {
+            using var connection = new FlinkSqlConnection(ConnectionString);
+            await connection.OpenAsync();
+
+            var selectSql = "SELECT " +
+                "CAST('2020-07-23' AS DATE) x, " +
+                "CAST('15:20:00' AS TIME), " +
+                "CAST('2020-07-23 15:20:00' AS TIMESTAMP), " +
+                "CAST(NULL AS TIMESTAMP)";
+            var selectCommand = connection.CreateCommand(selectSql);
+            using var reader = await selectCommand.ExecuteReaderAsync();
+
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal(new DateTime(2020, 7, 23, 0, 0, 0, DateTimeKind.Utc), reader.GetDateTime(0));
+            Assert.Equal(new TimeSpan(15, 20, 0), reader.GetTimeSpan(1));
+            Assert.Equal(new DateTimeOffset(new DateTime(2020, 7, 23, 15, 20, 0, DateTimeKind.Local)), reader.GetDateTimeOffset(2));
             Assert.True(reader.IsDBNull(3));
             Assert.False(await reader.ReadAsync());
         }
